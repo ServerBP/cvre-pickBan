@@ -1,151 +1,176 @@
 <script>
-  import { onMount } from 'svelte';
-
-  let mapKeys = '';
-  let mapPool = [];
-  let columns = {
-    'Team 1 Pick': [],
-    'Team 2 Pick': [],
-    'Team 1 Ban': [],
-    'Team 2 Ban': []
-  };
-  let team1Name = 'Team 1';
-  let team2Name = 'Team 2';
-  let isMatchFlowComplete = false;
-  let draggedMap = null;
-  let expandedMap = null;
-  let winnerTeam = null;
-
-  function saveToLocalStorage() {
-    localStorage.setItem('mapPool', JSON.stringify(mapPool));
-    localStorage.setItem('columns', JSON.stringify(columns));
-    localStorage.setItem('team1Name', team1Name);
-    localStorage.setItem('team2Name', team2Name);
-    localStorage.setItem('winnerTeam', winnerTeam);
-  }
-
-  function loadFromLocalStorage() {
-    const storedMapPool = localStorage.getItem('mapPool');
-    const storedColumns = localStorage.getItem('columns');
-    const storedTeam1Name = localStorage.getItem('team1Name');
-    const storedTeam2Name = localStorage.getItem('team2Name');
-    const storedWinnerTeam = localStorage.getItem('winnerTeam');
-
-    if (storedMapPool) mapPool = JSON.parse(storedMapPool);
-    if (storedColumns) columns = JSON.parse(storedColumns);
-    if (storedTeam1Name) team1Name = storedTeam1Name;
-    if (storedTeam2Name) team2Name = storedTeam2Name;
-    if (storedWinnerTeam) winnerTeam = storedWinnerTeam;
-
-    // Ensure columns object has all required properties
-    columns = {
-      [`${team1Name} Pick`]: columns[`${team1Name} Pick`] || [],
-      [`${team2Name} Pick`]: columns[`${team2Name} Pick`] || [],
-      [`${team1Name} Ban`]: columns[`${team1Name} Ban`] || [],
-      [`${team2Name} Ban`]: columns[`${team2Name} Ban`] || []
+  // @ts-nocheck
+  
+    import { onMount } from 'svelte';
+  
+    let mapKeys = '';
+    let mapPool = [];
+    let columns = {
+      'Team 1 Pick': [],
+      'Team 2 Pick': [],
+      'Team 1 Ban': [],
+      'Team 2 Ban': []
     };
-  }
-
-  onMount(() => {
-    loadFromLocalStorage();
-    checkMatchFlowComplete();
-  });
-
-  $: {
-    updateWinnerTeam();
-    saveToLocalStorage();
-  }
-
-  function updateWinnerTeam() {
-    const team1Wins = columns[`${team1Name} Pick`].filter(m => m.winner === team1Name).length;
-    const team2Wins = columns[`${team2Name} Pick`].filter(m => m.winner === team2Name).length;
-    if (team1Wins > team2Wins) {
-      winnerTeam = team1Name;
-    } else if (team2Wins > team1Wins) {
-      winnerTeam = team2Name;
-    } else {
-      winnerTeam = null;
+    let team1Name = 'Team 1';
+    let team2Name = 'Team 2';
+    let isMatchFlowComplete = false;
+    let draggedMap = null;
+    let expandedMap = null;
+    let winnerTeam = null;
+    let isDataLoaded = false; // New flag to ensure data is loaded before saving
+  
+    function saveToLocalStorage() {
+      if (!isDataLoaded) return; // Avoid saving if data isn't loaded yet
+  
+      localStorage.setItem('mapPool', JSON.stringify(mapPool));
+      localStorage.setItem('columns', JSON.stringify(columns));
+      localStorage.setItem('team1Name', team1Name);
+      localStorage.setItem('team2Name', team2Name);
+      localStorage.setItem('winnerTeam', winnerTeam);
     }
-  }
-
-  async function addMaps() {
-    if (!mapKeys) return;
-    const keys = mapKeys.split(',').map(key => key.trim()).filter(key => key !== '');
-    
-    for (const key of keys) {
-      try {
-        // Simulating API call (replace with actual API call)
-        const response = await fetch(`https://api.beatsaver.com/maps/id/${key}`);
-        const mapData = await response.json();
-        mapPool = [...mapPool, {
-          key: key,
-          name: mapData.name,
-          image: mapData.versions[0].coverURL,
-          difficulties: mapData.versions[0].diffs.map(d => d.difficulty),
-          selectedDifficulty: mapData.versions[0].diffs[0].difficulty,
-          result: '',
-          winner: null
-        }];
-      } catch (error) {
-        console.error(`Failed to add map with key ${key}:`, error);
+  
+    function loadFromLocalStorage() {
+      const storedMapPool = localStorage.getItem('mapPool');
+      const storedColumns = localStorage.getItem('columns');
+      const storedTeam1Name = localStorage.getItem('team1Name');
+      const storedTeam2Name = localStorage.getItem('team2Name');
+      const storedWinnerTeam = localStorage.getItem('winnerTeam');
+  
+      if (storedMapPool) mapPool = JSON.parse(storedMapPool);
+      if (storedColumns) columns = JSON.parse(storedColumns);
+      if (storedTeam1Name) team1Name = storedTeam1Name;
+      if (storedTeam2Name) team2Name = storedTeam2Name;
+      if (storedWinnerTeam) winnerTeam = storedWinnerTeam;
+  
+      // Ensure columns object has all required properties
+      columns = {
+        [`${team1Name} Pick`]: columns[`${team1Name} Pick`] || [],
+        [`${team2Name} Pick`]: columns[`${team2Name} Pick`] || [],
+        [`${team1Name} Ban`]: columns[`${team1Name} Ban`] || [],
+        [`${team2Name} Ban`]: columns[`${team2Name} Ban`] || []
+      };
+  
+      isDataLoaded = true; // Data is now loaded, allow saving
+    }
+  
+    onMount(() => {
+      loadFromLocalStorage();
+      checkMatchFlowComplete();
+    });
+  
+    // Reactive block to save changes to localStorage
+    $: {
+      if (isDataLoaded) {
+        updateWinnerTeam();
+        saveToLocalStorage();
       }
     }
-    
-    mapKeys = '';
-    saveToLocalStorage();
-  }
+  
+    function updateWinnerTeam() {
+      const team1Wins = columns[`${team1Name} Pick`].filter(m => m.winner === team1Name).length;
+      const team2Wins = columns[`${team2Name} Pick`].filter(m => m.winner === team2Name).length;
+      if (team1Wins > team2Wins) {
+        winnerTeam = team1Name;
+      } else if (team2Wins > team1Wins) {
+        winnerTeam = team2Name;
+      } else {
+        winnerTeam = null;
+      }
+    }
+  
+    async function addMaps() {
+      if (!mapKeys) return;
+      const keys = mapKeys.split(',').map(key => key.trim()).filter(key => key !== '');
+      
+      for (const key of keys) {
+        try {
+          const response = await fetch(`https://api.beatsaver.com/maps/id/${key}`);
+          const mapData = await response.json();
+          mapPool = [...mapPool, {
+            key: key,
+            name: mapData.name,
+            image: mapData.versions[0].coverURL,
+            difficulties: mapData.versions[0].diffs.map(d => d.difficulty),
+            selectedDifficulty: mapData.versions[0].diffs[0].difficulty,
+            result: '',
+            winner: null
+          }];
+        } catch (error) {
+          console.error(`Failed to add map with key ${key}:`, error);
+        }
+      }
+      
+      mapKeys = '';
+      saveToLocalStorage();
+    }
+  
+    function onDragStart(event, map) {
+      draggedMap = map;
+      event.dataTransfer.setData('text/plain', JSON.stringify(map));
+    }
+  
+    function onDragOver(event) {
+      event.preventDefault();
+      event.target.closest('.column')?.classList.add('drag-over');
+    }
+  
+    function onDragLeave(event) {
+      event.target.closest('.column')?.classList.remove('drag-over');
+    }
+  
+    function onDrop(event, columnName) {
+      event.preventDefault();
+      const column = event.target.closest('.column');
+      column?.classList.remove('drag-over');
+      
+      if (!draggedMap) return;
+      
+      Object.keys(columns).forEach(col => {
+        columns[col] = columns[col].filter(m => m.key !== draggedMap.key);
+      });
+      
+      columns[columnName] = [...columns[columnName], draggedMap];
+      columns = columns; // Trigger reactivity
+  
+      draggedMap = null;
+      checkMatchFlowComplete();
+      saveToLocalStorage();
+    }
+  
+    function checkMatchFlowComplete() {
+      const picksCount = columns[`${team1Name} Pick`].length + columns[`${team2Name} Pick`].length;
+      const bansCount = columns[`${team1Name} Ban`].length + columns[`${team2Name} Ban`].length;
+      isMatchFlowComplete = picksCount === 5 && bansCount === 2;
+    }
+  
+    function resetMatch() {
+      columns = {
+        [`${team1Name} Pick`]: [],
+        [`${team2Name} Pick`]: [],
+        [`${team1Name} Ban`]: [],
+        [`${team2Name} Ban`]: []
+      };
+      team1Name = 'Team 1';
+      team2Name = 'Team 2';
+      winnerTeam = null;
+      mapPool = [];
+      saveToLocalStorage();
+      checkMatchFlowComplete();
+    }
+  
+    // Other functions like `createMatchFlow`, `copyMatchData`, `removeMap`, `selectMapWinner`, `copyMapLink`, etc. remain unchanged.
 
-  function onDragStart(event, map) {
-    draggedMap = map;
-    event.dataTransfer.setData('text/plain', JSON.stringify(map));
-  }
-
-  function onDragOver(event) {
-    event.preventDefault();
-    event.target.closest('.column')?.classList.add('drag-over');
-  }
-
-  function onDragLeave(event) {
-    event.target.closest('.column')?.classList.remove('drag-over');
-  }
-
-  function onDrop(event, columnName) {
-    event.preventDefault();
-    const column = event.target.closest('.column');
-    column?.classList.remove('drag-over');
-    
-    if (!draggedMap) return;
-    
-    // Remove the map from its current column
-    Object.keys(columns).forEach(col => {
-      columns[col] = columns[col].filter(m => m.key !== draggedMap.key);
-    });
-    
-    // Add the map to the new column
-    columns[columnName] = [...columns[columnName], draggedMap];
-    columns = columns; // Trigger reactivity
-
-    draggedMap = null;
-    checkMatchFlowComplete();
-    saveToLocalStorage();
-  }
-
-  function checkMatchFlowComplete() {
-    const picksCount = columns[`${team1Name} Pick`].length + columns[`${team2Name} Pick`].length;
-    const bansCount = columns[`${team1Name} Ban`].length + columns[`${team2Name} Ban`].length;
-    isMatchFlowComplete = picksCount === 5 && bansCount === 2;
-  }
 
   function createMatchFlow() {
     const matchFlow = `# ${team1Name} vs ${team2Name}: Match Flow
-## Maps played:
-${columns[`${team1Name} Pick`].map(m => `* ${m.name}`).join('\n')}
-${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
-* ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker'} (Tiebreaker)
+  ## Maps played:
+  ${columns[`${team1Name} Pick`].map(m => `* ${m.name}`).join('\n')}
+  ${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
+  * ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker'} (Tiebreaker)
 
-## Bans:
-* ${columns[`${team1Name} Ban`][0]?.name || 'N/A'} - ${team1Name}
-* ${columns[`${team2Name} Ban`][0]?.name || 'N/A'} - ${team2Name}`;
+  ## Bans:
+  * ${columns[`${team1Name} Ban`][0]?.name || 'N/A'} - ${team1Name}
+  * ${columns[`${team2Name} Ban`][0]?.name || 'N/A'} - ${team2Name}`;
 
     navigator.clipboard.writeText(matchFlow);
     alert('Match Flow copied to clipboard!');
@@ -164,21 +189,6 @@ ${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
   function saveMatchResult(map, result) {
     map.result = result;
     saveToLocalStorage();
-  }
-
-  function resetMatch() {
-    columns = {
-      [`${team1Name} Pick`]: [],
-      [`${team2Name} Pick`]: [],
-      [`${team1Name} Ban`]: [],
-      [`${team2Name} Ban`]: []
-    };
-    team1Name = 'Team 1';
-    team2Name = 'Team 2';
-    winnerTeam = null;
-    mapPool = [];
-    saveToLocalStorage();
-    checkMatchFlowComplete();
   }
 
   function copyMapLink(mapKey) {
@@ -220,10 +230,12 @@ ${columns[`${team2Name} Pick`][2]?.name || 'No tiebreaker set'}
 ## Winner:
 ${winnerTeam || 'No winner yet'}`;
 
-    navigator.clipboard.writeText(matchData);
-    alert('Match Data copied to clipboard!');
-  }
-</script>
+navigator.clipboard.writeText(matchData);
+alert('Match Data copied to clipboard!');
+}
+  
+  </script>
+  
 
 <main>
   <h1>Beat Saber Tournament Manager</h1>
@@ -249,6 +261,7 @@ ${winnerTeam || 'No winner yet'}`;
 
   <div class="columns">
     {#each Object.entries(columns) as [columnName, maps]}
+      <!-- svelte-ignore a11y-no-static-element-interactions -->
       <div 
         class="column"
         class:ban={columnName.includes('Ban')}
@@ -259,7 +272,11 @@ ${winnerTeam || 'No winner yet'}`;
       >
         <h2>{columnName}</h2>
         {#each maps as map}
+          <!-- svelte-ignore a11y-click-events-have-key-events -->
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div class="map-card" class:expanded={expandedMap === map.key}>
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div class="map-header" on:click={() => expandedMap = expandedMap === map.key ? null : map.key}>
               <img src={map.image} alt={map.name} />
               <div class="map-info">
@@ -325,6 +342,7 @@ ${winnerTeam || 'No winner yet'}`;
     <h2>Map Pool</h2>
     <div class="map-grid">
       {#each mapPool as map}
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div class="map-card" draggable="true" on:dragstart={(e) => onDragStart(e, map)}>
           <img src={map.image} alt={map.name} />
           <div class="map-info">
