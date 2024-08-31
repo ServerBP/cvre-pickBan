@@ -162,14 +162,14 @@
 
   function createMatchFlow() {
     const matchFlow = `# ${team1Name} vs ${team2Name}: Match Flow
-  ## Maps played:
-  ${columns[`${team1Name} Pick`].map(m => `* ${m.name}`).join('\n')}
-  ${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
-  * ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker'} (Tiebreaker)
+## Maps played:
+${columns[`${team1Name} Pick`].map(m => `* ${m.name}`).join('\n')}
+${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
+* ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker'} (Tiebreaker)
 
-  ## Bans:
-  * ${columns[`${team1Name} Ban`][0]?.name || 'N/A'} - ${team1Name}
-  * ${columns[`${team2Name} Ban`][0]?.name || 'N/A'} - ${team2Name}`;
+## Bans:
+* ${columns[`${team1Name} Ban`][0]?.name || 'N/A'} - ${team1Name}
+* ${columns[`${team2Name} Ban`][0]?.name || 'N/A'} - ${team2Name}`;
 
     navigator.clipboard.writeText(matchFlow);
     alert('Match Flow copied to clipboard!');
