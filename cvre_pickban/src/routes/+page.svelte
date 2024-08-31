@@ -153,7 +153,6 @@
       team1Name = 'Team 1';
       team2Name = 'Team 2';
       winnerTeam = null;
-      mapPool = [];
       saveToLocalStorage();
       checkMatchFlowComplete();
     }
