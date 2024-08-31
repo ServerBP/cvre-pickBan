@@ -160,12 +160,31 @@
     // Other functions like `createMatchFlow`, `copyMatchData`, `removeMap`, `selectMapWinner`, `copyMapLink`, etc. remain unchanged.
 
 
-  function createMatchFlow() {
+// ---- DEPRECATED FUNCTION - DOESN'T RETURN MAPS IN ORDER ----
+
+//   function createMatchFlow() {
+//     const matchFlow = `# ${team1Name} vs ${team2Name}: Match Flow
+// ## Maps played:
+// ${columns[`${team1Name} Pick`].map(m => `* ${m.name}`).join('\n')}
+// ${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
+// * ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker'} (Tiebreaker)
+
+// ## Bans:
+// * ${columns[`${team1Name} Ban`][0]?.name || 'N/A'} - ${team1Name}
+// * ${columns[`${team2Name} Ban`][0]?.name || 'N/A'} - ${team2Name}`;
+
+//     navigator.clipboard.writeText(matchFlow);
+//     alert('Match Flow copied to clipboard!');
+//   }
+
+function createMatchFlow() {
     const matchFlow = `# ${team1Name} vs ${team2Name}: Match Flow
 ## Maps played:
-${columns[`${team1Name} Pick`].map(m => `* ${m.name}`).join('\n')}
-${columns[`${team2Name} Pick`].map(m => `* ${m.name}`).join('\n')}
-* ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker'} (Tiebreaker)
+1. ${columns[`${team1Name} Pick`][0].name}
+2. ${columns[`${team2Name} Pick`][0].name}
+3. ${columns[`${team2Name} Pick`][1].name}
+4. ${columns[`${team2Name} Pick`][1].name}
+5.* ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker' || columns[`${team1Name} Pick`][2]?.name} (Tiebreaker)
 
 ## Bans:
 * ${columns[`${team1Name} Ban`][0]?.name || 'N/A'} - ${team1Name}
