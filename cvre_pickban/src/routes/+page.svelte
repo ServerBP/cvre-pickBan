@@ -183,7 +183,7 @@ function createMatchFlow() {
 1. ${columns[`${team1Name} Pick`][0].name}
 2. ${columns[`${team2Name} Pick`][0].name}
 3. ${columns[`${team2Name} Pick`][1].name}
-4. ${columns[`${team2Name} Pick`][1].name}
+4. ${columns[`${team1Name} Pick`][1].name}
 5.* ${columns[`${team2Name} Pick`][2]?.name || 'Tiebreaker' || columns[`${team1Name} Pick`][2]?.name} (Tiebreaker)
 
 ## Bans:
